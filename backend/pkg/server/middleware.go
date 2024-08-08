@@ -9,7 +9,7 @@ type SessionMiddleware struct {
 	sessionStore SessionStore
 }
 
-func (m *SessionMiddleware) SetUp(s SessionStore, router gin.IRouter) {
+func (m *SessionMiddleware) SetUp(router gin.IRouter, s SessionStore) {
 	m.sessionStore = s
 	router.Use(m.UseSession)
 }

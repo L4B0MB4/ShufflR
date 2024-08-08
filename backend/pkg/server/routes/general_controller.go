@@ -1,16 +1,12 @@
 package routes
 
 import (
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
-	"io"
-	"net/http"
 	"net/url"
 
 	"github.com/L4B0MB4/Musicfriends/pkg/models"
 	"github.com/L4B0MB4/Musicfriends/pkg/server"
 	"github.com/L4B0MB4/Musicfriends/pkg/server/config"
+	"github.com/L4B0MB4/Musicfriends/pkg/server/manager"
 	"github.com/L4B0MB4/Musicfriends/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -19,13 +15,17 @@ import (
 type GeneralController struct {
 	sessionStore server.SessionStore
 	config       *config.Configuration
+	manager      *manager.Manager
 	redirect_uri string
 }
 
-func (g *GeneralController) SetUp(sessionStore server.SessionStore, router gin.IRouter, c *config.Configuration) {
+func (g *GeneralController) SetUp(router gin.IRouter, sessionStore server.SessionStore, c *config.Configuration, m *manager.Manager) {
+
+	//todo: thread safety could be an issue as all of these are singletons - ignoring for now. Won't cause any problems im sure :P
 	g.sessionStore = sessionStore
 	g.config = c
 	g.redirect_uri = "http://" + g.config.Host + ":" + g.config.Port + "/callback"
+	g.manager = m
 	router.GET("/", g.defaultRoute)
 	router.GET("/login", g.loginRoute)
 	router.GET("/callback", g.callbackRoute)
@@ -59,65 +59,20 @@ func (g *GeneralController) loginRoute(ctx *gin.Context) {
 
 func (g *GeneralController) callbackRoute(ctx *gin.Context) {
 	q := ctx.Request.URL.Query()
-
 	log.Info().Interface("queryobj", q).Str("querystr", q.Encode()).Msg("Return values")
 	code := q.Get("code")
-	req := http.Request{}
-	spotifyUrl, _ := url.Parse("https://accounts.spotify.com/api/token")
-	req.URL = spotifyUrl
-	form := url.Values{}
-	form.Add("code", code)
-	form.Add("redirect_uri", g.redirect_uri)
-	form.Add("grant_type", "authorization_code")
-	req.Body = io.NopCloser(bytes.NewBufferString(form.Encode()))
-	req.Header = http.Header{}
-	req.Header.Add("content-type", "application/x-www-form-urlencoded")
-	req.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(g.config.ClientId+":"+g.config.ClientSecret)))
-	req.Method = "POST"
-	client := &http.Client{}
-	res, err := client.Do(&req)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to do request to spotify")
-		return
-	}
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to do read spotify response body")
+
+	tokenRes := utils.GetAccessToken(code, g.redirect_uri, g.config.ClientId, g.config.ClientSecret)
+	if tokenRes == nil {
+		ctx.Redirect(301, "/forbidden")
 		return
 	}
 
-	tokenRes := models.TokenResponse{}
-	json.Unmarshal(b, &tokenRes)
-	log.Info().Interface("o", tokenRes).Msg("boddyyy")
-	profile := RequestMe(tokenRes)
+	profile := utils.SpotifyApiCall[models.CurrentUserProfile]("/v1/me", tokenRes.AccessToken, "GET", nil)
+	g.manager.UpsertProfile(profile)
 	if profile != nil {
 		sessionKey := g.sessionStore.AddSession(*profile)
 		ctx.SetCookie("session", sessionKey, 3600, "/", g.config.Host, true, true)
-		ctx.Writer.Write([]byte("<html><body><script>window.location.href='/'</script></body></html>"))
+		ctx.Writer.Write([]byte("<html><body><script>window.location.href='/api/me'</script></body></html>"))
 	}
-}
-
-func RequestMe(tokenRes models.TokenResponse) *models.CurrentUserProfile {
-	req := http.Request{}
-	spotifyUrl, _ := url.Parse("https://api.spotify.com/v1/me")
-	req.URL = spotifyUrl
-	req.Header = http.Header{}
-	req.Header.Add("Authorization", "Bearer "+tokenRes.AccessToken)
-	req.Method = "GET"
-	client := &http.Client{}
-
-	res, err := client.Do(&req)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to do request to spotify")
-		return nil
-	}
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to do read spotify response body")
-		return nil
-	}
-	profile := models.CurrentUserProfile{}
-	json.Unmarshal(b, &profile)
-	log.Info().Str("b", string(b)).Msg("boddyyy")
-	return &profile
 }

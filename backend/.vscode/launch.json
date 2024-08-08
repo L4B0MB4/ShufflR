@@ -11,7 +11,10 @@
             "mode": "debug",
             "output": "debug",
             "program": "${workspaceFolder}/cmd/main.go",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "CGO_ENABLED":"1"
+            }
         }
     ]
 }
