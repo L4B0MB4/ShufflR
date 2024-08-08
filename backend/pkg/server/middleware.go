@@ -1,6 +1,8 @@
 package server
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
@@ -24,6 +26,10 @@ func (m *SessionMiddleware) UseSession(ctx *gin.Context) {
 	session, ok := m.sessionStore.GetSession(val)
 	if ok {
 		ctx.Set("session", session)
+	}
+	if strings.Contains(ctx.Request.URL.String(), "/api/") && !ok {
+		ctx.Redirect(301, "/forbidden")
+		return
 	}
 	ctx.Next()
 

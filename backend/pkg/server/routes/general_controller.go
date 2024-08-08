@@ -29,6 +29,7 @@ func (g *GeneralController) SetUp(router gin.IRouter, sessionStore server.Sessio
 	router.GET("/", g.defaultRoute)
 	router.GET("/login", g.loginRoute)
 	router.GET("/callback", g.callbackRoute)
+	router.GET("/forbidden", g.forbiddenRoute)
 }
 
 func (g *GeneralController) defaultRoute(ctx *gin.Context) {
@@ -39,6 +40,10 @@ func (g *GeneralController) defaultRoute(ctx *gin.Context) {
 	} else {
 		ctx.Writer.Write([]byte("helloooo"))
 	}
+}
+
+func (g *GeneralController) forbiddenRoute(ctx *gin.Context) {
+	ctx.Writer.Write([]byte("<b>forbidden</b>"))
 }
 
 func (g *GeneralController) loginRoute(ctx *gin.Context) {
