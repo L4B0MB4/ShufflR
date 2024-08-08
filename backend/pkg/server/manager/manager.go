@@ -19,3 +19,11 @@ func (m Manager) UpsertProfile(user *models.CurrentUserProfile) {
 		database.InsertUserProfile(m.db, user)
 	}
 }
+
+func (m Manager) GetUserProfile(userId string) *models.CurrentUserProfile {
+	res := database.GetUserProfile(m.db, userId)
+	if res == nil {
+		return &models.CurrentUserProfile{}
+	}
+	return res
+}

@@ -3,15 +3,16 @@ package server
 import (
 	"strings"
 
+	"github.com/L4B0MB4/Musicfriends/pkg/server/interfaces"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
 
 type SessionMiddleware struct {
-	sessionStore SessionStore
+	sessionStore interfaces.SessionStore
 }
 
-func (m *SessionMiddleware) SetUp(router gin.IRouter, s SessionStore) {
+func (m *SessionMiddleware) SetUp(router gin.IRouter, s interfaces.SessionStore) {
 	m.sessionStore = s
 	router.Use(m.UseSession)
 }
@@ -23,9 +24,9 @@ func (m *SessionMiddleware) UseSession(ctx *gin.Context) {
 		ctx.Next()
 		return
 	}
-	session, ok := m.sessionStore.GetSession(val)
+	ok := m.sessionStore.HasSession(val)
 	if ok {
-		ctx.Set("session", session)
+		ctx.Set("session", val)
 	}
 	if strings.Contains(ctx.Request.URL.String(), "/api/") && !ok {
 		ctx.Redirect(301, "/forbidden")

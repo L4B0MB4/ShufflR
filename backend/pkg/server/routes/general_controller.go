@@ -4,8 +4,8 @@ import (
 	"net/url"
 
 	"github.com/L4B0MB4/Musicfriends/pkg/models"
-	"github.com/L4B0MB4/Musicfriends/pkg/server"
 	"github.com/L4B0MB4/Musicfriends/pkg/server/config"
+	"github.com/L4B0MB4/Musicfriends/pkg/server/interfaces"
 	"github.com/L4B0MB4/Musicfriends/pkg/server/manager"
 	"github.com/L4B0MB4/Musicfriends/pkg/utils"
 	"github.com/gin-gonic/gin"
@@ -13,13 +13,13 @@ import (
 )
 
 type GeneralController struct {
-	sessionStore server.SessionStore
+	sessionStore interfaces.SessionStore
 	config       *config.Configuration
 	manager      *manager.Manager
 	redirect_uri string
 }
 
-func (g *GeneralController) SetUp(router gin.IRouter, sessionStore server.SessionStore, c *config.Configuration, m *manager.Manager) {
+func (g *GeneralController) SetUp(router gin.IRouter, sessionStore interfaces.SessionStore, c *config.Configuration, m *manager.Manager) {
 
 	//todo: thread safety could be an issue as all of these are singletons - ignoring for now. Won't cause any problems im sure :P
 	g.sessionStore = sessionStore
@@ -76,7 +76,12 @@ func (g *GeneralController) callbackRoute(ctx *gin.Context) {
 	profile := utils.SpotifyApiCall[models.CurrentUserProfile]("/v1/me", tokenRes.AccessToken, "GET", nil)
 	g.manager.UpsertProfile(profile)
 	if profile != nil {
-		sessionKey := g.sessionStore.AddSession(*profile)
+		userAuth := models.UserContext{
+			ID:           profile.ID,
+			AccessToken:  tokenRes.AccessToken,
+			RefreshToken: tokenRes.RefreshToken,
+		}
+		sessionKey := g.sessionStore.AddSession(userAuth)
 		ctx.SetCookie("session", sessionKey, 3600, "/", g.config.Host, true, true)
 		ctx.Writer.Write([]byte("<html><body><script>window.location.href='/api/me'</script></body></html>"))
 	}

@@ -26,6 +26,7 @@ func setup() *server.Server {
 	sMw := server.SessionMiddleware{}
 	sessionStore := server.InMemorySessionStore{}
 	gC := routes.GeneralController{}
+	mC := routes.MeController{}
 	dbConn := database.DatabaseConnection{}
 	mng := manager.Manager{}
 	c.SetUp()
@@ -33,6 +34,7 @@ func setup() *server.Server {
 	dbConn.SetUp()
 	mng.SetUp(&dbConn)
 	gC.SetUp(router, &sessionStore, &c, &mng)
+	mC.SetUp(router, &sessionStore, &mng)
 	_, err := dbConn.GetDbConnection()
 	if err != nil {
 		log.Error().Err(err).Msg("Error setting up db connection. Stoping...")
