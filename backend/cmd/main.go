@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/L4B0MB4/Musicfriends/pkg/database"
@@ -22,6 +23,8 @@ func main() {
 func setup() *server.Server {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	router := gin.Default()
+	router.StaticFile("/", "./static/index.html")
+	router.StaticFS("/static", http.Dir("./static"))
 	c := config.Configuration{}
 	sMw := server.SessionMiddleware{}
 	sessionStore := server.InMemorySessionStore{}

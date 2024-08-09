@@ -26,20 +26,9 @@ func (g *GeneralController) SetUp(router gin.IRouter, sessionStore interfaces.Se
 	g.config = c
 	g.redirect_uri = "http://" + g.config.Host + ":" + g.config.Port + "/callback"
 	g.manager = m
-	router.GET("/", g.defaultRoute)
 	router.GET("/login", g.loginRoute)
 	router.GET("/callback", g.callbackRoute)
 	router.GET("/forbidden", g.forbiddenRoute)
-}
-
-func (g *GeneralController) defaultRoute(ctx *gin.Context) {
-	re, _ := ctx.Get("session")
-	session, ok := re.(models.CurrentUserProfile)
-	if ok {
-		ctx.JSON(200, session)
-	} else {
-		ctx.Writer.Write([]byte("helloooo"))
-	}
 }
 
 func (g *GeneralController) forbiddenRoute(ctx *gin.Context) {
