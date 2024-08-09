@@ -38,7 +38,7 @@ func (g *GeneralController) forbiddenRoute(ctx *gin.Context) {
 func (g *GeneralController) loginRoute(ctx *gin.Context) {
 
 	q := url.Values{}
-	scope := "user-read-private user-read-email"
+	scope := "user-read-private user-read-email user-top-read"
 
 	state := utils.RandomString(16)
 	q.Set("response_type", "code")
@@ -62,7 +62,7 @@ func (g *GeneralController) callbackRoute(ctx *gin.Context) {
 		return
 	}
 
-	profile := utils.SpotifyApiCall[models.CurrentUserProfile]("/v1/me", tokenRes.AccessToken, "GET", nil)
+	profile := utils.SpotifyApiCall[models.CurrentUserProfile]("/v1/me", tokenRes.AccessToken, "GET", nil, nil)
 	g.manager.UpsertProfile(profile)
 	if profile != nil {
 		userAuth := models.UserContext{
@@ -72,6 +72,6 @@ func (g *GeneralController) callbackRoute(ctx *gin.Context) {
 		}
 		sessionKey := g.sessionStore.AddSession(userAuth)
 		ctx.SetCookie("session", sessionKey, 3600, "/", g.config.Host, true, true)
-		ctx.Writer.Write([]byte("<html><body><script>window.location.href='/api/me'</script></body></html>"))
+		ctx.Writer.Write([]byte("<html><body><script>window.location.href='http://localhost:3000'</script></body></html>"))
 	}
 }

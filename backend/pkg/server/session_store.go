@@ -13,7 +13,7 @@ func (s *InMemorySessionStore) AddSession(m models.UserContext) string {
 	if s.sessions == nil {
 		s.sessions = map[string]models.UserContext{}
 	}
-	sessionKey := utils.RandomString(16)
+	sessionKey := utils.RandomString(255)
 	s.sessions[sessionKey] = m
 	return sessionKey
 

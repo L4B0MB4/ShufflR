@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func SpotifyApiCall[T any](path string, accessToken string, method string, body []byte) *T {
+func SpotifyApiCall[T any](path string, accessToken string, method string, query url.Values, body []byte) *T {
 	req := http.Request{}
 	spotifyUrlStr, err := url.JoinPath("https://api.spotify.com/", path)
 	if err != nil {
@@ -23,6 +23,9 @@ func SpotifyApiCall[T any](path string, accessToken string, method string, body 
 	if err != nil {
 		log.Error().Err(err).Msg("Could not parse the api url")
 		return nil
+	}
+	if query != nil {
+		spotifyUrl.RawQuery = query.Encode()
 	}
 	req.URL = spotifyUrl
 	req.Header = http.Header{}
@@ -39,6 +42,7 @@ func SpotifyApiCall[T any](path string, accessToken string, method string, body 
 		return nil
 	}
 	b, err := io.ReadAll(res.Body)
+	//log.Debug().Str("body", string(b)).Msg("Body for call to " + spotifyUrl.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to do read spotify response body")
 		return nil

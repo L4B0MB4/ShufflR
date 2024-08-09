@@ -20,6 +20,10 @@ func (m *SessionMiddleware) SetUp(router gin.IRouter, s interfaces.SessionStore)
 func (m *SessionMiddleware) UseSession(ctx *gin.Context) {
 	val, err := ctx.Cookie("session")
 	if err != nil {
+		if strings.Contains(ctx.Request.URL.String(), "/api/") {
+			ctx.AbortWithStatus(401)
+			return
+		}
 		log.Error().Err(err).Msg("Error during session recovery")
 		ctx.Next()
 		return
@@ -29,7 +33,7 @@ func (m *SessionMiddleware) UseSession(ctx *gin.Context) {
 		ctx.Set("session", val)
 	}
 	if strings.Contains(ctx.Request.URL.String(), "/api/") && !ok {
-		ctx.Redirect(301, "/forbidden")
+		ctx.AbortWithStatus(401)
 		return
 	}
 	ctx.Next()
