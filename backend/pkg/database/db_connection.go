@@ -20,20 +20,46 @@ func (d *DatabaseConnection) SetUp() {
 		log.Info().Err(err).Msg("Opening sqlite connection")
 		return
 	}
+	if createUsersTable(db) != nil {
+		return
+	}
+	if createTopTracksTable(db) != nil {
+		return
+	}
+	d.db = db
+	d.initialized = true
+}
+
+func createUsersTable(db *sql.DB) error {
 	stmt, err := db.Prepare("CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data BLOB)")
 	if err != nil {
 
 		log.Info().Err(err).Msg("Preparing statement for users table")
-		return
+		return err
 	}
 	_, err = stmt.Exec()
 	if err != nil {
 
 		log.Info().Err(err).Msg("Creating users table")
-		return
+		return err
 	}
-	d.db = db
-	d.initialized = true
+	return nil
+}
+
+func createTopTracksTable(db *sql.DB) error {
+	stmt, err := db.Prepare("CREATE TABLE IF NOT EXISTS topTracks (userId TEXTNOT NULL,data BLOB, fromDate INTEGER,UNIQUE(userId, fromDate) ON CONFLICT FAIL )")
+	if err != nil {
+
+		log.Info().Err(err).Msg("Preparing statement for users table")
+		return err
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+
+		log.Info().Err(err).Msg("Creating users table")
+		return err
+	}
+	return nil
 }
 
 func (d *DatabaseConnection) GetDbConnection() (*sql.DB, error) {

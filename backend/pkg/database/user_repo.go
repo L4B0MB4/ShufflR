@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/L4B0MB4/Musicfriends/pkg/models"
 	"github.com/rs/zerolog/log"
@@ -57,7 +58,7 @@ func InsertUserProfile(db *DatabaseConnection, user *models.CurrentUserProfile) 
 func GetTopTracks(db *DatabaseConnection, userId string) *models.TopTracksResponse {
 
 	con, _ := db.GetDbConnection()
-	stmt, err := con.Prepare("Select data FROM topTracks where userId =?")
+	stmt, err := con.Prepare("Select data FROM topTracks where userId =? order by fromData desc")
 	if err != nil {
 		return nil
 	}
@@ -67,4 +68,21 @@ func GetTopTracks(db *DatabaseConnection, userId string) *models.TopTracksRespon
 		return nil
 	}
 	return &topTracksModel
+}
+
+func SaveTopTracks(db *DatabaseConnection, userId string, topTracks *models.TopTracksResponse) error {
+	con, _ := db.GetDbConnection()
+	stmt, err := con.Prepare("Insert into topTracks (userId,data,fromDate) values(?,?,?)")
+	if err != nil {
+		return nil
+	}
+	body, err := json.Marshal(topTracks)
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(userId, body, time.Now().Unix())
+	if err != nil {
+		return err
+	}
+	return nil
 }
