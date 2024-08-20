@@ -58,12 +58,12 @@ func InsertUserProfile(db *DatabaseConnection, user *models.CurrentUserProfile) 
 func GetTopTracks(db *DatabaseConnection, userId string) *models.TopTracksResponse {
 
 	con, _ := db.GetDbConnection()
-	stmt, err := con.Prepare("Select data FROM topTracks where userId =? order by fromData desc")
+	stmt, err := con.Prepare("Select data FROM topTracks where userId =? where fromDate>?")
 	if err != nil {
 		return nil
 	}
 	var topTracksModel models.TopTracksResponse
-	row := stmt.QueryRow(userId)
+	row := stmt.QueryRow(userId, time.Now().Add(-(time.Hour * 24)))
 	if deserializeRow(row, &topTracksModel) != nil {
 		return nil
 	}
