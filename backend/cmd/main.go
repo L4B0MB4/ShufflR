@@ -31,7 +31,7 @@ func setup() *server.Server {
 	gC := routes.GeneralController{}
 	mC := routes.MeController{}
 	dbConn := database.DatabaseConnection{}
-	mng := manager.Manager{}
+	mng := manager.PersonalInfoManager{}
 	c.SetUp()
 	sMw.SetUp(router, &sessionStore)
 	dbConn.SetUp()

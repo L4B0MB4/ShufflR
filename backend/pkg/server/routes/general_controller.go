@@ -15,11 +15,11 @@ import (
 type GeneralController struct {
 	sessionStore interfaces.SessionStore
 	config       *config.Configuration
-	manager      *manager.Manager
+	manager      *manager.PersonalInfoManager
 	redirect_uri string
 }
 
-func (g *GeneralController) SetUp(router gin.IRouter, sessionStore interfaces.SessionStore, c *config.Configuration, m *manager.Manager) {
+func (g *GeneralController) SetUp(router gin.IRouter, sessionStore interfaces.SessionStore, c *config.Configuration, m *manager.PersonalInfoManager) {
 
 	//todo: thread safety could be an issue as all of these are singletons - ignoring for now. Won't cause any problems im sure :P
 	g.sessionStore = sessionStore

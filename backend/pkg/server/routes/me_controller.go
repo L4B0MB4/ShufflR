@@ -12,10 +12,10 @@ import (
 
 type MeController struct {
 	sessionStore interfaces.SessionStore
-	manager      *manager.Manager
+	manager      *manager.PersonalInfoManager
 }
 
-func (ctrl *MeController) SetUp(router gin.IRouter, sessionStore interfaces.SessionStore, m *manager.Manager) {
+func (ctrl *MeController) SetUp(router gin.IRouter, sessionStore interfaces.SessionStore, m *manager.PersonalInfoManager) {
 	ctrl.sessionStore = sessionStore
 	ctrl.manager = m
 	router.GET("/api/me", ctrl.getRoute)
